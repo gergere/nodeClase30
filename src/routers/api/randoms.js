@@ -3,7 +3,7 @@ import { fork } from 'child_process';
 
 const random = new Router();
 
-const forked = fork(process.cwd() + '/src/api/randomCalc.js')
+const forked = fork(process.cwd() + '/api/randomCalc.js')
 
 const execChild = (cant) => {
   return new Promise((res, rej) => {

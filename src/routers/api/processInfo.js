@@ -1,4 +1,5 @@
 import { Router } from "express";
+import os from 'os';
 
 const info = new Router();
 
@@ -11,6 +12,7 @@ const processData = {
   path: process.execPath,
   IDProcess: process.pid,
   folder: process.cwd(),
+  cpuCores: os.cpus().length
 }
 
 info.get('/info', (req, res) => {

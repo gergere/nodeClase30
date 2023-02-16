@@ -17,59 +17,75 @@ import addMensajesHandlers from './routers/ws/mensajes.js'
 import random from './routers/api/randoms.js'
 
 //--------------------------------------------
-// instancio servidor, socket y api
+export const server = () => {
 
-const app = express()
-const httpServer = new HttpServer(app)
-const io = new Socket(httpServer)
+    // instancio servidor, socket y api
+    const app = express()
+    const httpServer = new HttpServer(app)
+    const io = new Socket(httpServer)
 
-//--------------------------------------------
-// configuro el socket
+    //--------------------------------------------
+    // configuro el socket
 
-io.on('connection', async socket => {
-    addMensajesHandlers(socket, io.sockets);
-    addProductosHandlers(socket, io.sockets);
-});
+    io.on('connection', async socket => {
+        addMensajesHandlers(socket, io.sockets);
+        addProductosHandlers(socket, io.sockets);
+    });
 
-//--------------------------------------------
-// configuro el servidor
+    //--------------------------------------------
+    // configuro el servidor
 
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
-app.use(express.static('public'))
+    app.use(express.json())
+    app.use(express.urlencoded({ extended: true }))
+    app.use(express.static('public'))
 
-app.set('view engine', 'ejs');
+    app.set('view engine', 'ejs');
 
-app.use(session({
-    store: MongoStore.create({
-        mongoUrl: config.mongoRemote.cnxStr,
-        mongoOptions: config.mongoRemote.options
-    }),
-    secret: 'secret',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-        maxAge: 30000
+    app.use(session({
+        store: MongoStore.create({
+            mongoUrl: config.mongoRemote.cnxStr,
+            mongoOptions: config.mongoRemote.options
+        }),
+        secret: 'secret',
+        resave: false,
+        saveUninitialized: false,
+        cookie: {
+            maxAge: 30000
+        }
+    }))
+
+    //--------------------------------------------
+    // rutas del servidor API REST
+
+    app.use(productosApiRouter);
+    app.use(info);
+    app.use(random);
+
+    //--------------------------------------------
+    // rutas del servidor web
+
+    app.use(authWebRouter);
+    app.use(homeWebRouter);
+
+    //--------------------------------------------
+    // inicio el servidor
+    return {
+
+        listen: new Promise((res, rej) => {
+            const connectedServer = httpServer.listen(config.PORT, () => {
+                res(connectedServer);
+            })
+            connectedServer.on('error', error => {
+                rej(error);
+            })
+        })
     }
-}))
+}
 
-//--------------------------------------------
-// rutas del servidor API REST
-
-app.use(productosApiRouter);
-app.use(info);
-app.use(random);
-
-//--------------------------------------------
-// rutas del servidor web
-
-app.use(authWebRouter);
-app.use(homeWebRouter);
-
-//--------------------------------------------
-// inicio el servidor
-
-const connectedServer = httpServer.listen(config.PORT, () => {
-    console.log(`Servidor http escuchando en el puerto ${connectedServer.address().port}`)
-})
-connectedServer.on('error', error => console.log(`Error en servidor ${error}`))
+const app = server();
+try {
+    const connectedServer = await app.listen;
+    console.log(`Proceso ${process.pid} escuchando en el puerto ${connectedServer.address().port}`);
+} catch (error) {
+    console.log(`Error en servidor ${error}`);
+}
